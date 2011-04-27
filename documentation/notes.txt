@@ -1,0 +1,10 @@
+-I'll need to order some more Delrin to complete the end manipulator.
+-Having parts rapid prototyped with FDM at Mind Studios seems like the 
+best way to go for the gripper.
+
+-Remember to turn the torque on in the firmware!
+-The servos seem to draw enough current to trip
+ the current limiting in the PSU when moving at
+ speeds > 50. Might be remedied with a decoupling
+ capacitor, or running from 12V -> GND with a regulator
+ rather than 12V -> 3.3V.

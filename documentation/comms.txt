@@ -1,0 +1,25 @@
+Communications Protocol
+
+This text file describes the protocol used to communicate between
+the Arduino controlling the arm and the desktop client software.
+
+The basic structure of a packet from the desktop client to the 
+Arduino is as follows:
+$P:512@1#
+
+The dollar sign indicates the beginning of a packet. The letter
+following indicates the type of packet. The colon indicates the 
+value of that parameter. The @ and following number indicates the 
+servo address. The hash indicates the end of the packet.
+
+Packet types are as follows:
+P: Position. Followed by 0-1023 to indicate the angle of the servo.
+S: Speed. Followed by 0-1023 to indicate the speed of the servo.
+T: Torque. Followed by 0 or 1 to indicate whether torque is enabled.
+
+The Arduino firmware interprets these packets and sends appropriate
+commands to the arm.
+
+Serial multiplexer channels:
+0: AX12
+1: USB to Serial converter

@@ -1,0 +1,21 @@
+Notes on the Firmware
+by Nick Pascucci
+
+The firmware serves a very simple function: to relay data back and forth
+between the computer and the servos. All of the servos on this arm design
+are capable of communicating over some sort of serial interface. The
+Dynamixel AX-12 and AX-18 servos use half-duplex asynchronous serial
+to communicate, and the OpenServos use I2C/TWI to send and receive data.
+For that reason, there are two means of querying the servos and setting
+their positions; the firmware will select between these based on the 
+number of the servo requested by the computer client software.
+
+These numbers are:
+0: The base AX-12 servo.
+1: The shoulder AX-18 servo.
+2: The elbow AX-12 servo.
+3: The first end positioner servo. This is in axis.
+4: The second end positioner servo. This is a pin joint servo.
+5: The third end positioner servo. This is in axis.
+
+
