@@ -1,0 +1,110 @@
+# -*- Mode: Python; coding: utf-8; indent-tabs-mode: nil; tab-width: 4 -*-
+### BEGIN LICENSE
+# This file is in the public domain
+### END LICENSE
+
+import gettext
+from gettext import gettext as _
+gettext.textdomain('brazo')
+
+import gtk
+import webbrowser
+import logging
+logger = logging.getLogger('brazo')
+
+from brazo_lib import Window
+from brazo.AboutBrazoDialog import AboutBrazoDialog
+from brazo.PreferencesBrazoDialog import PreferencesBrazoDialog
+from brazo.armcontrol import Pose, ArmControl
+
+# See brazo_lib.Window.py for more details about how this class works
+class BrazoWindow(Window):
+    __gtype_name__ = "BrazoWindow"
+    
+    def finish_initializing(self, builder): # pylint: disable=E1002
+        """Set up the main window"""
+        super(BrazoWindow, self).finish_initializing(builder)
+
+        self.AboutDialog = AboutBrazoDialog()
+        self.PreferencesDialog = PreferencesBrazoDialog()
+
+        # Code for other initialization actions should be added here.
+        self.poses = []
+
+    def about(self, builder):
+        response = self.AboutDialog.run()
+        if response == gtk.RESPONSE_DELETE_EVENT or response == gtk.RESPONSE_CANCEL:
+            self.AboutDialog.hide()
+         
+    def help(self, widget):
+        webbrowser.open_new("http://kestrelrobotics.com/support/51-brazo-support/68-brazo-help")
+    
+    def quit(self, builder):
+        exit(0)
+
+    def on_baseTorque_toggled(self, widget, data=None):
+        
+        if widget.get_active():
+            widget.set_label("Torque: ON")
+        else:
+            widget.set_label("Torque: OFF")
+        
+    def on_shoulderTorque_toggled(self, widget, data=None):
+        if widget.get_active():
+            widget.set_label("Torque: ON")
+        else:
+            widget.set_label("Torque: OFF")
+        
+    def on_elbowTorque_toggled(self, widget, data=None):
+        if widget.get_active():
+            widget.set_label("Torque: ON")
+        else:
+            widget.set_label("Torque: OFF")
+        
+    def on_wristRotTorque_toggled(self, widget, data=None):
+        if widget.get_active():
+            widget.set_label("Torque: ON")
+        else:
+            widget.set_label("Torque: OFF")
+        
+    def on_wristFlexTorque_toggled(self, widget, data=None):
+        if widget.get_active():
+            widget.set_label("Torque: ON")
+        else:
+            widget.set_label("Torque: OFF")
+        
+    def on_gripRotTorque_toggled(self, widget, data=None):
+        if widget.get_active():
+            widget.set_label("Torque: ON")
+        else:
+            widget.set_label("Torque: OFF")
+        
+    def on_gripperCloseButton_toggled(self, widget, data=None):
+        if widget.get_active():
+            widget.set_label("Closed")
+        else:
+            widget.set_label("Open")
+        
+    def on_addPoseButton_clicked(self, widget, data=None):
+        print "Add pose button clicked."
+        #TODO modify these to the appropriate widgets
+        base = self.ui.baseSpinner.get_value()
+        shoulder = self.ui.shoulderSpinner.get_value()
+        elbow = self.ui.elbowSpinner.get_value()
+        wristRot = self.ui.wristRotationSpinner.get_value()
+        wristFlex = self.ui.wristFlexionSpinner.get_value()
+        gripRot = self.ui.gripperRotationSpinner.get_value()
+        gripClose = self.ui.gripperCloseButton.get_active()
+        
+        #TODO create a pose and add it to the list
+        pose = Pose(base, shoulder, elbow, wristRot, wristFlex, gripRot, gripClose)
+        self.poses.append(pose)
+        print self.poses
+        
+        
+    def on_removePoseButton_clicked(self, widget, data=None):
+        print "Remove pose button clicked."
+        
+    def on_clearPoseButton_clicked(self, widget, data=None):
+        print "Clear pose button clicked."
+

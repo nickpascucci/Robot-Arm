@@ -1,0 +1,8 @@
+[Desktop Entry]
+_Name=Brazo
+_Comment=Brazo application
+Categories=GNOME;Utility;
+Exec=brazo
+Icon=brazo
+Terminal=false
+Type=Application

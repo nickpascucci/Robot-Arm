@@ -1,0 +1,24 @@
+Connect the following controls:
+- Settings -
+Save changes -> CouchDB
+Discard changes -> Clear fields
+
+- Teach -
+All labels -> read positions
+Grab -> Read from arm
+Add -> Create pose and add to list
+
+- IK -
+Spinners
+Button -> Read variables -> Calculate 
+
+- Notes -
+a) Need to make sure that the way joint angles are treated is consistent between the desktop and the
+arm.
+b) On IK page, the arm lengths are in the same units as the coordinate system.
+
+
+
+
+
+
