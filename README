@@ -1,0 +1,14 @@
+Robot Arm GitHub Repository
+
+This repository contains the content I've created in developing a
+robot arm. The arm is built entirely from scratch, with the exception of
+an Arduino for control and some servos for movement. All of the parts
+are given in QCAD .dxf format, and are machinable on a standard lathe/mill
+setup. The project is still under development, and the files will most likely
+be revised for clarity at some point in the future when the project is done!
+
+Licenses:
+Software: MIT License. 
+
+Drawings/Images: Creative Commons Attribution-ShareAlike. 
+
