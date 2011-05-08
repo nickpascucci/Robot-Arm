@@ -1,6 +1,5 @@
 /**
-    Multiplexer.cpp - A library for controlling the 74HC4052
-    serial multiplexer.
+    Multiplexer.cpp - A library for controlling the 74HC4052 serial multiplexer.
     Created by Nicholas Pascucci, May 2011
 */
 
@@ -14,10 +13,11 @@
 Multiplexer::Multiplexer(int a, int b){
     _a = a;
     _b = b;
-    pinMode(a, OUTPUT);
-    pinMode(b, OUTPUT);
-    digitalWrite(a, LOW);
-    digitalWrite(b, LOW);
+    pinMode(_a, OUTPUT);
+    pinMode(_b, OUTPUT);
+    
+    digitalWrite(_a, LOW);
+    digitalWrite(_b, LOW);
     _chan = 0;
 }
 
@@ -25,11 +25,9 @@ Multiplexer::Multiplexer(int a, int b){
     Selects the given channel if possible.
     Returns the current channel; if selection fails, returns last channel.
 */
-int Multiplexer::select(int channel, int baud){
-    Serial.end();
-    Serial.begin(baud);
+int Multiplexer::select(int channel){
     if(channel = _chan){ 
-        //Select same channel
+        // Selected same channel, do not change select lines.
         return _chan;
     }
     switch(channel){

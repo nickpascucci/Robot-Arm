@@ -11,7 +11,7 @@ class Multiplexer
 {
     public:
         Multiplexer(int a, int b);
-        int select(int channel, int baud);
+        int select(int channel);
         
     private:
         int _a;
