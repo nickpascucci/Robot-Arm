@@ -44,5 +44,5 @@ def main():
     window = BrazoWindow.BrazoWindow()
     window.show()
     gtk.main()
-    
+    window.finalize()
     #preferences.save()

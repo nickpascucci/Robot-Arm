@@ -46,7 +46,7 @@ class ArmControl:
 
         May raise an exception.
         """
-
+        self.port = ser_port
         self.__serial = serial.Serial(port=ser_port, timeout=1, writeTimeout=1) # Defaults are OK. 8N1 9600b
         try:
             self.__serial.open()
@@ -138,11 +138,11 @@ class ArmControl:
             
     # Writes the command to the serial line in a manner understood by the firmware.
     def send_command(self, command, *args):
-	print "Sending command."
-	cmd_str = ArmControl.commands[command]
-	args_str = ",".join(args)
-	if len(args_str) > 0:
-            args_str = "," + args_str
+        print "Sending command."
+        cmd_str = ArmControl.commands[command]
+        args_str = ",".join(args)
+        if len(args_str) > 0:
+                args_str = "," + args_str
         print  "Arguments:", args_str
         msg = cmd_str + args_str + ";"
         print "Message:", msg
@@ -160,7 +160,7 @@ class ArmControl:
         self.__serial.flushInput()
         self.__serial.flushOutput()
     
-    def close_connection(self):
+    def close(self):
         """Close the serial connection."""
         self.__serial.close()
 
@@ -200,13 +200,20 @@ class Pose:
             grip = "Closed"
         else:
             grip = "Open"
-        str = "<{0}, {1}, {2}, {3}, {4}, {5}, {6}>".format(self.base,
+            
+        str = "<{0}@{7}, {1}@{8}, {2}@{9}, {3}@{10}, {4}@{11}, {5}@{12}, {6}>".format(self.base,
         self.shoulder,
         self.elbow,
         self.wristRot,
         self.wristFlex,
         self.gripRot,
-        grip)
+        grip,
+        self.speeds[0],
+        self.speeds[1],
+        self.speeds[2],
+        self.speeds[3],
+        self.speeds[4],
+        self.speeds[5],)
         return str
         
         
@@ -230,5 +237,5 @@ if __name__ == "__main__":
     print "Toggling led..."
     ac.send_command("toggle-led", "1", "2")
     time.sleep(1)
-    ac.close_connection()
+    ac.close()
 
