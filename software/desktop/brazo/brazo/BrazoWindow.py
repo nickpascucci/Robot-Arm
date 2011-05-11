@@ -10,13 +10,14 @@ gettext.textdomain('brazo')
 import gtk
 import webbrowser
 import logging
+import time
 logger = logging.getLogger('brazo')
 
 from brazo_lib import Window
 from brazo.AboutBrazoDialog import AboutBrazoDialog
 from brazo.PreferencesBrazoDialog import PreferencesBrazoDialog
-from brazo.armcontrol import Pose, ArmControl
-import brazo.inversekinematics
+from brazo.ArmControl import Pose, ArmControl
+import brazo.InverseKinematics
 
 # See brazo_lib.Window.py for more details about how this class works
 class BrazoWindow(Window):
@@ -27,13 +28,23 @@ class BrazoWindow(Window):
         super(BrazoWindow, self).finish_initializing(builder)
 
         self.AboutDialog = AboutBrazoDialog()
-        #self.PreferencesDialog = PreferencesBrazoDialog()
+        self.PreferencesDialog = PreferencesBrazoDialog()
 
         # Code for other initialization actions should be added here.
         self.poses = []
         self.selected_pose = None
         lengths = self.get_lengths()
-        self.ikcalc = brazo.inversekinematics.IKCalculator(lengths)
+        self.ikcalc = brazo.InverseKinematics.IKCalculator(lengths)
+        
+        # Initialize combo box
+        liststore = gtk.ListStore(str)
+        self.ui.port_combo_box.set_model(liststore)
+        cell = gtk.CellRendererText()
+        self.ui.port_combo_box.pack_start(cell, True)
+        self.ui.port_combo_box.add_attribute(cell, 'text', 0)        
+        
+        self.enumerate_ports()
+        
 
     def about(self, builder):
         response = self.AboutDialog.run()
@@ -135,6 +146,8 @@ class BrazoWindow(Window):
     def on_play_button_clicked(self, widget, data=None):
         """Play through the poses."""
         print "Play button clicked."
+        for pose in self.poses:
+            print pose
         
     def on_grab_button_clicked(self, widget, data=None):
         """Grab the arm's current pose and add it to the list."""
@@ -159,10 +172,8 @@ class BrazoWindow(Window):
         pass
 
     def on_notebook1_switch_page(self, widget, page, page_num, data=None):
-        #if page_num == 2:
-            #print "On teach page."
-            # Start updating the positions
-        pass
+        if page_num == 3:
+            self.enumerate_ports()
         
     def get_lengths(self):
         """Get the arm segment lengths from settings page and return as a tuple."""
@@ -173,12 +184,57 @@ class BrazoWindow(Window):
         
         return (height, upper, lower, wrist)
         
+    def on_test_button_clicked(self, widget, data=None):
+        self.test_connection()
         
+    def enumerate_ports(self):
+        avail_ports = brazo.ArmControl.get_available_ports()
+        liststore = self.ui.port_combo_box.get_model()
+        liststore.clear()
         
+        for port in avail_ports:
+            liststore.append([port])
         
+        if len(avail_ports) == 0:
+            self.ui.status_label.set_text("No serial ports found!")
+        #else:
+            #self.ui.port_combo_box.set_active(0)
+            #print "Selected port", avail_ports[0]
+            #self.armcon = ArmControl(avail_ports[0])
+            #print "Testing connection."
+            #self.test_connection()
+            #print "Done testing."
         
+    def on_port_combo_box_changed(self, widget, data=None):
+        # Create new arm control object based on serial port selection
+        active_port = self.ui.port_combo_box.get_active()
+        if active_port != -1:
+            active_port = self.ui.port_combo_box.get_model()[active_port][0]
+            self.armcon = ArmControl(active_port)
         
+    def test_connection(self):
+        self.set_status("Testing...", 0.1)
+        self.armcon.send_command("kARDUINO_READY")
         
+        print "Sent ping"
+        response = self.armcon.read(1)
+        print "Response:", response
+        self.set_status(progress=0.3)
+        print "Read response."
+        if str(response) is ArmControl.commands["kACK"]:
+            self.set_status("Arduino online!", 0.6)
+            self.armcon.send_command("toggle-led")
+            self.set_status("Success!", 1.0)
+        else:
+            self.set_status("Connection failed!", 1.0)
+            
+        self.armcon.flush()
+        
+    def set_status(self, text=None, progress=None):
+        if text is not None:
+            self.ui.status_label.set_text(text)
+        if progress is not None:
+            self.ui.progressbar.set_fraction(progress)
         
         
         

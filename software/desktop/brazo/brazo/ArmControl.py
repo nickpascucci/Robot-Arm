@@ -4,8 +4,10 @@
     Uses pyserial to communicate to the serial port.
 """
 
+import glob
 import serial
 import time
+
 
 class ArmControl:
     """
@@ -45,7 +47,7 @@ class ArmControl:
         May raise an exception.
         """
 
-        self.__serial = serial.Serial(port=ser_port) # Defaults are OK. 8N1 9600b
+        self.__serial = serial.Serial(port=ser_port, timeout=1, writeTimeout=1) # Defaults are OK. 8N1 9600b
         try:
             self.__serial.open()
         except serial.SerialException as e:
@@ -136,15 +138,16 @@ class ArmControl:
             
     # Writes the command to the serial line in a manner understood by the firmware.
     def send_command(self, command, *args):
-        cmd_str = ArmControl.commands[command]
-        args_str = ",".join(args)
-        if len(args_str) > 0:
+	print "Sending command."
+	cmd_str = ArmControl.commands[command]
+	args_str = ",".join(args)
+	if len(args_str) > 0:
             args_str = "," + args_str
-        print args_str
+        print  "Arguments:", args_str
         msg = cmd_str + args_str + ";"
-        print msg
+        print "Message:", msg
         bytes = self.__serial.write(msg)
-        print bytes, "written"
+        print "Bytes:", bytes, "written"
     
     def read_available(self):
         num_avail = self.__serial.inWaiting()
@@ -153,6 +156,10 @@ class ArmControl:
     def read(self, num):
         return self.__serial.read(num)
             
+    def flush(self):
+        self.__serial.flushInput()
+        self.__serial.flushOutput()
+    
     def close_connection(self):
         """Close the serial connection."""
         self.__serial.close()
@@ -202,18 +209,12 @@ class Pose:
         grip)
         return str
         
+        
 def get_available_ports():
     """Enumerate available serial ports and return a list of names."""
-    available = []
-    for i in range(256):
-        try:
-            s = serial.Serial(i)
-            available.append(s.portstr)
-            s.close()
-        except serial.SerialException:
-            pass
-    return available
-    
+    return glob.glob('/dev/ttyUSB*')
+
+
 if __name__ == "__main__":
     # Test module
     ac = ArmControl("/dev/ttyUSB0")
