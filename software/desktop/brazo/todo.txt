@@ -16,7 +16,7 @@ Button -> Read variables -> Calculate
 a) Need to make sure that the way joint angles are treated is consistent between the desktop and the
 arm.
 b) On IK page, the arm lengths are in the same units as the coordinate system.
-
+c) Perhaps it would be good to remove the "Torque" settings and add a "Speed" setting instead?
 
 
 

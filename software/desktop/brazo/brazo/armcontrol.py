@@ -117,8 +117,12 @@ class ArmControl:
 class Pose:
     """Stores a pose of the arm."""
 
-    def __init__(self, base=0, shoulder=0, elbow=0,	wristRot=0,	wristFlex=0, gripRot=0, gripClose=False):		
-        """Create a new pose with the given angles."""
+    def __init__(self, base=0, shoulder=0, elbow=0,	wristRot=0,	wristFlex=0, gripRot=0, speeds=None, gripClose=False):		
+        """Create a new pose with the given angles and speeds.
+        
+        The angles are specified as independent arguments, speeds are specified as a 6-tuple from 
+        base to grip rotation.
+        """
         self.base = base
         self.shoulder = shoulder
         self.elbow = elbow
@@ -126,9 +130,8 @@ class Pose:
         self.wristFlex = wristFlex
         self.gripRot = gripRot
         self.gripClose = gripClose
-	
-#	def __repr__(self):
-		#"""Print the representation of this object as a string."""
+        self.speeds = speeds
+        
 		
 		
     def __str__(self):
