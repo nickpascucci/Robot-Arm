@@ -73,7 +73,11 @@ void setup(){
   
   selectUSB();
   arduino_ready();
+}
 
+void loop(){
+  // Wait on commands.
+  cmd.feedinSerialData();
 }
 
 void attach_callbacks(messengerCallbackFunction* callbacks){
@@ -91,11 +95,6 @@ void unknown_command(){
 
 void arduino_ready(){
   cmd.sendCmd(kACK, "Arduino ready");
-}
-
-void loop(){
-  // Wait on commands.
-  cmd.feedinSerialData();
 }
 
 void set_position(){
