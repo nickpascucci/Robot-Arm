@@ -4,9 +4,11 @@
     Uses pyserial to communicate to the serial port.
 """
 
+import glob
 import serial
 import time
 import base64
+
 
 class ArmControl:
     """
@@ -45,8 +47,8 @@ class ArmControl:
 
         May raise an exception.
         """
-
-        self.__serial = serial.Serial(port=ser_port) # Defaults are OK. 8N1 9600b
+        self.port = ser_port
+        self.__serial = serial.Serial(port=ser_port, timeout=1, writeTimeout=1) # Defaults are OK. 8N1 9600b
         try:
             self.__serial.open()
         except serial.SerialException as e:
@@ -137,15 +139,16 @@ class ArmControl:
             
     # Writes the command to the serial line in a manner understood by the firmware.
     def send_command(self, command, *args):
+        print "Sending command."
         cmd_str = ArmControl.commands[command]
         args_str = ",".join(args)
         if len(args_str) > 0:
-            args_str = "," + args_str
-        print args_str
+                args_str = "," + args_str
+        print  "Arguments:", args_str
         msg = cmd_str + args_str + ";"
-        print msg
+        print "Message:", msg
         bytes = self.__serial.write(msg)
-        print bytes, "written"
+        print "Bytes:", bytes, "written"
     
     def read_available(self):
         num_avail = self.__serial.inWaiting()
@@ -154,15 +157,23 @@ class ArmControl:
     def read(self, num):
         return self.__serial.read(num)
             
-    def close_connection(self):
+    def flush(self):
+        self.__serial.flushInput()
+        self.__serial.flushOutput()
+    
+    def close(self):
         """Close the serial connection."""
         self.__serial.close()
 
 class Pose:
     """Stores a pose of the arm."""
 
-    def __init__(self, base=0, shoulder=0, elbow=0,	wristRot=0,	wristFlex=0, gripRot=0, gripClose=False):		
-        """Create a new pose with the given angles."""
+    def __init__(self, base=0, shoulder=0, elbow=0, wristRot=0, wristFlex=0, gripRot=0, speeds=None, gripClose=False):		
+        """Create a new pose with the given angles and speeds.
+        
+        The angles are specified as independent arguments, speeds are specified as a 6-tuple from 
+        base to grip rotation.
+        """
         self.base = base
         self.shoulder = shoulder
         self.elbow = elbow
@@ -170,11 +181,8 @@ class Pose:
         self.wristFlex = wristFlex
         self.gripRot = gripRot
         self.gripClose = gripClose
-    
-#	def __repr__(self):
-        #"""Print the representation of this object as a string."""
-        
-        
+        self.speeds = speeds
+
     def __str__(self):
         """Print the informal representation of this object as a string."""
         str = "<Base: {0}, Shoulder: {1}, Elbow: {2}, Wrist Rotation: {3}, Wrist Flexion: {4}, Grip Rotation: {5}, Grip Closed: {6}>".format(self.base,
@@ -193,27 +201,28 @@ class Pose:
             grip = "Closed"
         else:
             grip = "Open"
-        str = "<{0}, {1}, {2}, {3}, {4}, {5}, {6}>".format(self.base,
+            
+        str = "<{0}@{7}, {1}@{8}, {2}@{9}, {3}@{10}, {4}@{11}, {5}@{12}, {6}>".format(self.base,
         self.shoulder,
         self.elbow,
         self.wristRot,
         self.wristFlex,
         self.gripRot,
-        grip)
+        grip,
+        self.speeds[0],
+        self.speeds[1],
+        self.speeds[2],
+        self.speeds[3],
+        self.speeds[4],
+        self.speeds[5],)
         return str
+        
         
 def get_available_ports():
     """Enumerate available serial ports and return a list of names."""
-    available = []
-    for i in range(256):
-        try:
-            s = serial.Serial(i)
-            available.append(s.portstr)
-            s.close()
-        except serial.SerialException:
-            pass
-    return available
-    
+    return glob.glob('/dev/ttyUSB*')
+
+
 if __name__ == "__main__":
     # Test module
     ac = ArmControl("/dev/ttyUSB0")
@@ -229,5 +238,5 @@ if __name__ == "__main__":
     print "Toggling led..."
     ac.send_command("toggle-led", "1", "2")
     time.sleep(1)
-    ac.close_connection()
+    ac.close()
 
