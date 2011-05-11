@@ -6,6 +6,7 @@
 
 import serial
 import time
+import base64
 
 class ArmControl:
     """

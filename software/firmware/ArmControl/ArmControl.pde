@@ -49,7 +49,6 @@ enum {
   kHOLDER10 = 16,
   
   kSEND_CMDS_END, // Mid way through our range
-  
 };
 
 // PC -> Arduino messages
@@ -98,7 +97,22 @@ void arduino_ready(){
 }
 
 void set_position(){
+	
   cmd.sendCmd(kCOMPLETE, "Position set");
+}
+
+char* decode_args(){
+  char decode_buf[300] = {'\0'};
+    while (cmd.available())
+  {
+    char buf[300] = { '\0' };
+    cmd.copyString(buf, 20);
+    if(buf[0])
+    {
+      base64_decode(decode_buf, buf, 20); // Gives us an array of bytes in decode_buf      
+    }
+  }
+  return decode_buf;
 }
 
 void set_speed(){
