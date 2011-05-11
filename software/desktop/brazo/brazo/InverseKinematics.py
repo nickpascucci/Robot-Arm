@@ -6,7 +6,7 @@
 
 import math
 
-from armcontrol import Pose
+from ArmControl import Pose
 
 class UnreachableError(Exception):
     def __init__(self, value):
