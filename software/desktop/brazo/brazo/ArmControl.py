@@ -7,8 +7,7 @@
 import glob
 import serial
 import time
-import base64
-
+import struct
 
 class ArmControl:
     """
@@ -27,7 +26,7 @@ class ArmControl:
         "kSPEED": "5",
         "kGRIP": "6",
         "kCOMPLETE": "7",
-        "kHOLDER2": "8",
+        "kDIAGNOSTICS": "8",
         "kHOLDER3": "9",
         "kHOLDER4": "10",
         "kHOLDER5": "11",
@@ -48,34 +47,14 @@ class ArmControl:
         May raise an exception.
         """
         self.port = ser_port
-        self.__serial = serial.Serial(port=ser_port, timeout=1, writeTimeout=1) # Defaults are OK. 8N1 9600b
+        self.__serial = serial.Serial(port=ser_port, baudrate=19200, timeout=1, writeTimeout=1)
         try:
             self.__serial.open()
         except serial.SerialException as e:
             raise Exception("Could not open serial port.")
 
-    def move_base(self, degrees):
+    def move_joint(self, joint, degrees):
         """Rotate the base of the arm by the specified amount."""
-        
-        
-    def move_shoulder(self, degrees):
-        """Rotate the shoulder of the arm by the specified amount."""
-        
-        
-    def move_elbow(self, degrees):
-        """Rotate the elbow of the arm by the specified amount."""
-        
-        
-    def rotate_wrist(self, degrees):
-        """Rotate the wrist of the arm by the specified amount."""
-        
-    
-    def flex_wrist(self, degrees):
-        """Flex the wrist of the arm by the specified amount."""
-        
-        
-    def rotate_gripper(self, degrees):
-        """Rotate the gripper of the arm by the specified amount."""
         
         
     def open_grip(self):
@@ -114,6 +93,7 @@ class ArmControl:
         """Read the state of the gripper and return True if closed."""
 
     def get_current_pose(self):
+        """Read the current pose of the robot and return it."""
         base = self.read_base_angle()
         shoulder = self.read_shoulder_angle()
         elbow = self.read_elbow_angle()
@@ -125,20 +105,17 @@ class ArmControl:
         return pose
 
     def move_to_pose(self, pose):
-        """Moves the robot into the given pose."""
-        self.move_base(pose.base)
-        self.move_shoulder(pose.shoulder)
-        self.move_elbow(pose.elbow)
-        self.rotate_wrist(pose.wristRot)
-        self.flex_wrist(pose.wristFlex)
-        self.rotate_grip(pose.gripRot)
-        if pose.grip == 0:
-            self.close_grip()
-        else:
-            self.open_grip()
+        """Move the robot into the given pose."""
+        self.send_command('17', byte_to_base64(0), byte_to_base64(pose.base))
+        self.send_command('17', byte_to_base64(1), byte_to_base64(pose.shoulder))
+        self.send_command('17', byte_to_base64(2), byte_to_base64(pose.elbow))
+        self.send_command('17', byte_to_base64(3), byte_to_base64(pose.wrist_rot))
+        self.send_command('17', byte_to_base64(4), byte_to_base64(pose.wrist_flex))
+        self.send_command('17', byte_to_base64(5), byte_to_base64(pose.grip))
             
-    # Writes the command to the serial line in a manner understood by the firmware.
+            
     def send_command(self, command, *args):
+        """Write a command to serial that is understood by the firmware."""
         print "Sending command."
         cmd_str = ArmControl.commands[command]
         args_str = ",".join(args)
@@ -149,15 +126,22 @@ class ArmControl:
         print "Message:", msg
         bytes = self.__serial.write(msg)
         print "Bytes:", bytes, "written"
+
+    def byte_to_base64(self, val):
+        """Encode a numeric value as a base64 string."""
+        return struct.pack('B', val).encode('base64')
     
     def read_available(self):
+        """Read up to the number of available bytes."""
         num_avail = self.__serial.inWaiting()
         return self.__serial.read(num_avail)
 
     def read(self, num):
+        """Read num bytes in a blocking fashion."""
         return self.__serial.read(num)
             
     def flush(self):
+        """Flush input and output buffers."""
         self.__serial.flushInput()
         self.__serial.flushOutput()
     

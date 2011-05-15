@@ -26,10 +26,6 @@ Multiplexer::Multiplexer(int a, int b){
     Returns the current channel; if selection fails, returns last channel.
 */
 int Multiplexer::select(int channel){
-    if(channel = _chan){ 
-        // Selected same channel, do not change select lines.
-        return _chan;
-    }
     switch(channel){
         case 0:
             digitalWrite(_a, LOW);

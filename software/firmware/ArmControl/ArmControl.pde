@@ -19,13 +19,15 @@
 Multiplexer mux(8, 9);
 const int AX12 = 0;
 const int USB = 1;
+const int BAUD_RATE = 19200;
 
 // Serial command and control variables.
 char field_separator = ',';
 char command_separator = ';';
 CmdMessenger cmd = CmdMessenger(Serial, field_separator, command_separator);
 
-// This enum holds Arduino -> PC messages.
+// Arduino -> PC messages.
+
 enum {
   // General meta messages
   kCOMM_ERROR = 0,
@@ -38,7 +40,7 @@ enum {
   kSPEED = 5,
   kGRIP = 6,
   kCOMPLETE = 7,
-  kHOLDER2 = 8,
+  kDIAGNOSTICS = 8,
   kHOLDER3 = 9,
   kHOLDER4 = 10,
   kHOLDER5 = 11,
@@ -52,32 +54,43 @@ enum {
 };
 
 // PC -> Arduino messages
+
 messengerCallbackFunction messengerCallbacks[] = {
   set_position, // 17
   set_speed,
   set_grip,
   toggle_led,
+  read_pos,
+  
 };
 
 void setup(){
   pinMode(13, OUTPUT);
+  pinMode(7, OUTPUT);
+  digitalWrite(7, LOW);
   
   cmd.print_LF_CR();
   cmd.attach(kARDUINO_READY, arduino_ready);
+  cmd.attach(kDIAGNOSTICS, run_diagnostics);
   cmd.attach(unknown_command);
   attach_callbacks(messengerCallbacks);
   
   selectAX12();
-  torque_on(1);
+  for(int i = 0; i < 3; i++){
+    //torque_on(i);
+    TorqueOn(i);
+  }
   
   selectUSB();
   arduino_ready();
+  run_diagnostics();
 }
 
 void loop(){
-  // Wait on commands.
-  cmd.feedinSerialData();
+  cmd.feedinSerialData(); // Wait on commands.
 }
+
+// CmdMessenger functions
 
 void attach_callbacks(messengerCallbackFunction* callbacks){
   int i = 0;
@@ -97,22 +110,21 @@ void arduino_ready(){
 }
 
 void set_position(){
-	
+  char arg1[100] = { '\0' };
+  char arg2[100] = { '\0' };
+  get_base_64_data(arg1, 100);
+  get_base_64_data(arg2, 100);
+  char servo = arg1[0];
+  char pos = arg2[0];
+  
   cmd.sendCmd(kCOMPLETE, "Position set");
 }
 
-char* decode_args(){
-  char decode_buf[300] = {'\0'};
-    while (cmd.available())
-  {
-    char buf[300] = { '\0' };
-    cmd.copyString(buf, 20);
-    if(buf[0])
-    {
-      base64_decode(decode_buf, buf, 20); // Gives us an array of bytes in decode_buf      
-    }
-  }
-  return decode_buf;
+void print_pos_ack(char servo, char pos){
+  String acknowledge = "Setting servo " + String(servo, DEC) + " to position " + String(pos, DEC);
+  char ack_chars[40] = { '\0' };
+  acknowledge.toCharArray(ack_chars, 40);
+  cmd.sendCmd(kACK, ack_chars);
 }
 
 void set_speed(){
@@ -124,7 +136,57 @@ void set_grip(){
 }
 
 void toggle_led(){
-  digitalWrite(13, !digitalRead(13));
+  cmd.sendCmd(kACK, "Blinking!");
+  char data[100] = { '\0' };
+  get_base_64_data(data, 100);
+  char repetitions = data[0];
+  for (int i = 0; i < repetitions; i++){
+    digitalWrite(13, !digitalRead(13));
+    delay(500);
+    digitalWrite(13, !digitalRead(13));
+    delay(500);
+  }
+}
+
+void read_pos(){
+  char arg1[100] = { '\0' };
+  get_base_64_data(arg1, 100);
+  char servo = arg1[0];
+  
+  char pos = query_servo_pos(servo);
+  
+  char out[10] = { '\0' };
+  char args[1] = {servo};
+  base64_encode(out, args, 1);
+  cmd.sendCmd(kACK, out); // Send ACK and servo position
+}
+
+void set_servo_pos(char servo, char pos){
+  // Implement AX12 and OpenServo specific handling here.
+  if(servo < 3){
+    // AX12
+    selectAX12();
+    SetPosition((int) servo, (int) pos);
+    delay(5);
+    selectUSB();
+    delay(5);
+  }
+  else{
+    // OpenServo
+    
+  }
+}
+
+char query_servo_pos(char servo){
+  // Implement AX12 and OpenServo specific handling here.
+  if(servo < 3){
+    // AX12
+    
+  }
+  else{
+    // OpenServo
+    
+  }
 }
 
 // Helper functions
@@ -133,6 +195,7 @@ void toggle_led(){
   Selects the AX12 line on the serial multiplexer.
 */
 void selectAX12(){
+  digitalWrite(7, HIGH);
   Serial.end();
   delay(5);
   mux.select(AX12);
@@ -143,14 +206,50 @@ void selectAX12(){
   Selects the USB line on the serial multiplexer.
 */
 void selectUSB(){
-  Serial.end(); //Hopefully this will turn off the UART.
+  digitalWrite(7, LOW);
+  Serial.end(); //Hopefully this will turn off the AX12 comms.
   delay(5);
-  mux.select(USB);
-  Serial.begin(9600);
+  int chan = mux.select(USB);
+  if(chan != USB){
+    toggle_led();
+  }
+  Serial.begin(BAUD_RATE);
 }
 
 void torque_on(int id){
   ax12SetRegister(id, AX_TORQUE_ENABLE, 1);
 }
+
+void get_base_64_data(char *out, int len){
+  if(cmd.available())
+  {
+    // Read data into temporary storage
+    char in[350] = { '\0'};
+    cmd.copyString(in, 350);
+    if(in[0]){
+      // Decode into the given buffer.
+      int decoded = base64_decode(out, in, len);
+    }
+  }
+}
+
+void run_diagnostics(){
+  for(int i=0; i<6; i++){
+    set_servo_pos(i, 100);
+  }
+  delay(1000);
+  cmd.sendCmd(kACK, "Done!");
+}
+
+
+
+
+
+
+
+
+
+
+
 
 

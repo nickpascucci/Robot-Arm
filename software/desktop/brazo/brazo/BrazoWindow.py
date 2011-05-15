@@ -213,6 +213,13 @@ class BrazoWindow(Window):
             self.set_status("No port selected.", 0.0)
         
         
+    def on_diagnostics_button_clicked(self, widget, data=None):
+        if self.armcon is not None:
+            self.test_connection()
+            self.run_diagnostics()
+        else:
+            self.set_status("Not connected.", 0.0)
+        
     def enumerate_ports(self):
         avail_ports = brazo.ArmControl.get_available_ports()
         liststore = self.ui.port_combo_box.get_model()
@@ -254,7 +261,16 @@ class BrazoWindow(Window):
             
         self.armcon.flush()
         
-        
+    def run_diagnostics(self):
+        self.set_status("Connecting...", 0.1)
+        self.armcon.send_command("kDIAGNOSTICS")
+        time.sleep(.01)
+        response = self.armcon.read(1);
+        self.armcon.flush()
+        print response
+        self.set_status("Response: " + response, 0.2)
+        print "done."
+	
     def set_status(self, text=None, progress=None):
         if text is not None:
             self.ui.status_label.set_text(text)
